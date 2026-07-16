@@ -1,0 +1,1 @@
+-- INSERT INTO tests (name) VALUES (akira);

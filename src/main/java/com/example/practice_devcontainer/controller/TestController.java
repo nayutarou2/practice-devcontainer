@@ -18,9 +18,10 @@ public class TestController {
 
     @GetMapping("/")
     public ResponseEntity home() {
+        System.out.println("🔌 フロントからの疎通リクエストを検知しました！データを返します。");
 
         return ResponseEntity.ok().body(testRepository.selectAll());
-        
+
     }
 
 }
