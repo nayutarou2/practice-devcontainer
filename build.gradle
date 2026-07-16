@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.1.0'
+	id 'org.springframework.boot' version '3.5.14'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -17,17 +17,53 @@ repositories {
 	mavenCentral()
 }
 
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testCompileOnly 'org.projectlombok:lombok'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testAnnotationProcessor 'org.projectlombok:lombok'
+ext {
+	mybatisVersion = '3.0.5'
+	jjwtVersion = '0.12.7'
 }
+
+dependencies {
+// === 1. Web & ユーティリティ ===
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// === 2. データベース & マイグレーション ===
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${mybatisVersion}"
+	
+	// 🌟 グリル解決：Spring BootのBOM管理が効くため、flyway-core のバージョン記述は不要（自動決定されます）
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql' 
+
+	// === 3. セキュリティ & 認証 ===
+	// 🌟 グリル解決：セットで動くJJWTをトリプル直書きから「変数展開」へ。
+	// これにより、0.12.7から別のバージョンに上げる際も、extブロックの1箇所を書き換えるだけで安全にアップデートが完了します。
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+
+	// === 4. 通常ユニットテスト関連 ===
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${mybatisVersion}"
+	
+	// 🌟 グリル解決：テスト時のLombokの無駄な重複定義を、Java21＆Gradleの推奨構成に合わせてすっきり整理
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// === 5. Testcontainers (JUnit時使い捨てPostgreSQL自動起動) ===
+	// 🌟 これらは「io.spring.dependency-management」プラグインがバージョンを自動管理してくれるため、
+	// 面倒なバージョン直書きを一切排除し、Spring Boot本体のバージョンと完璧に連動させます。
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+}
+	// implementation 'org.springframework.boot:spring-boot-starter-security'
+	// implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// implementation 'org.passay:passay:1.6.6'
+
 
 tasks.named('test') {
 	useJUnitPlatform()
